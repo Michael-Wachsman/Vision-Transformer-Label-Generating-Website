@@ -14,5 +14,6 @@ To stop the server, terminate the current endpoint process with control C, then 
 If you want to have the data in this db persist between server runs, comment out line 6 from stop.sh
 
 
+fix db race condition
 
 npm install openai
