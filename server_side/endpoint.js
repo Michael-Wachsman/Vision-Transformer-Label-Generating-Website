@@ -1,3 +1,6 @@
+const fs = require("fs");
+const OpenAI = require("openai")
+
 const express = require('express');
 const cors = require("cors");
 const multer = require('multer');
@@ -89,12 +92,87 @@ app.post('/upload',upload.array('images'),(req,res) => {
     });
 });
 
+const openai = new OpenAI({apiKey: process.env.API_KEY,});
 
 
-app.listen(port, ()=>{
+app.get('/query', async (req,res) => {
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                "role": "developer",
+                "content": "You are a helpful assistant named Jeff."
+                },
+                {
+                "role": "user",
+                "content": "Hello, whats your name!"
+                }
+            ],
+        });
+
+        const query_res = response; 
+
+        console.log("Query done:", query_res);
+        message = query_res.choices?.[0]?.message?.content || "No response"
+        res.json(message); // Send the response back to the frontend
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Failed to fetch response from OpenAI" });
+    }
+});
+
+app.get('/query_img', async (req,res) => {
+    const imagePath = "uploads/1742095621341-Screen Shot 2023-02-03 at 10.52.50 AM.png";
+    const base64Image = fs.readFileSync(imagePath, "base64");
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [{
+                role: "user",
+                content: [
+                    { type: "text", text: "what's in this image?" },
+                    {
+                        type: "image_url",
+                        image_url: {
+                            url: `data:image/jpeg;base64,${base64Image}`,
+                        },
+                    },
+                ],
+            }],
+        });
+
+        const query_res = response; 
+
+        console.log("Query done:", query_res);
+        message = query_res.choices?.[0]?.message?.content || "No response"
+        res.json(message); // Send the response back to the frontend
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "Failed to fetch response from OpenAI" });
+    }
+});
+const server = app.listen(port, ()=>{
     console.log("Server is running on port:" );
 });
 
+
+
+
+
+
+
+
+// Handle shutdown signals (Ctrl+C or SIGTERM)
+process.on('SIGINT', () => {
+    console.log('Graceful shutdown initiated...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0); // Exit the process after closing the server
+    });
+});
 
 
 

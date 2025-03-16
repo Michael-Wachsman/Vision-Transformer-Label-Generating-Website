@@ -12,3 +12,7 @@ To stop the server, terminate the current endpoint process with control C, then 
 ./stop.sh
 
 If you want to have the data in this db persist between server runs, comment out line 6 from stop.sh
+
+
+
+npm install openai

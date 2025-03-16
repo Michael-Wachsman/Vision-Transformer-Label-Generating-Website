@@ -1,0 +1,3 @@
+#!/bin/bash
+export API_KEY=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
+node endpoint.js
