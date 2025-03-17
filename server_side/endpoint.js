@@ -1,5 +1,6 @@
 const fs = require("fs");
 const OpenAI = require("openai")
+const sharp = require('sharp');
 
 const express = require('express');
 const cors = require("cors");
@@ -54,6 +55,21 @@ app.get('/', (req, res) => {
     res.send("User DB Online");
 });
 
+async function resizeImage(path) {
+    try {
+        tmpPath = path + "khzkcdvajesbOIv"
+        await sharp(path)
+            .resize({height: 200}) // Resize to given width & height
+            .toFile(tmpPath);
+
+        fs.renameSync(tmpPath, path, ()=>{
+            fs.unlink(tmpPath);
+        });
+        console.log(`Image resized and saved to ${path}`);
+    } catch (err) {
+        console.error("Error resizing image:", err);
+    }
+}
 
 
 app.post('/upload', upload.array('images'), async (req, res) => {
@@ -67,6 +83,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
     resp_json = []
     try{
         for (const img of req.files){
+            await resizeImage(img["path"]);
 
             annotation = await query_img(img["path"]);
             
@@ -92,7 +109,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         // Respond to the client
         return res.json({
             message: "Imagees uploaded and queried successfully",
-            "query results": resp_json
+            "gen annotations": resp_json
         });
     } catch(error){
         console.log(error)
@@ -143,7 +160,7 @@ async function query_img(imagePath) {
 
         const query_res = response;
 
-        console.log("Query done:", query_res);
+        console.log(imagePath + " Query done");
         message = query_res.choices?.[0]?.message?.content || "No response"
         return JSON.parse(message); // Send the response back to the frontend
     } catch (error) {

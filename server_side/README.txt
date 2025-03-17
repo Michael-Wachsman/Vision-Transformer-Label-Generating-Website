@@ -17,3 +17,4 @@ If you want to have the data in this db persist between server runs, comment out
 fix db race condition
 
 npm install openai
+npm install sharp
