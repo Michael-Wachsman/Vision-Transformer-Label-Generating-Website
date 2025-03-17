@@ -24,7 +24,7 @@ export default function MultipleImageUpload() {
       const response = await axios.post("http://localhost:4440/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setGeneratedAnnotations(response.data["gen annotations"])
+      setGeneratedAnnotations(response.data["image results"])
       setShowAnnotations(true);
       console.log("Upload successful:", response.data);
     } catch (error) {

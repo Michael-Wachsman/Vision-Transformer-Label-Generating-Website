@@ -109,7 +109,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         // Respond to the client
         return res.json({
             message: "Imagees uploaded and queried successfully",
-            "gen annotations": resp_json
+            "image results": resp_json
         });
     } catch(error){
         console.log(error)
@@ -138,7 +138,7 @@ async function query_img(imagePath) {
             messages: [
                 { 
                     role: "system", 
-                    content: "Given an image, enter the relevant information for each of the following fields in a JSON dict: {\"labels\": [<array of labels>], \"environment\": \"environment observations\", and \"objects of interest\": [<array of object names>]}." 
+                    content: "Given an image, enter the relevant information for each of the following fields in a JSON dict: {\"labels\": [<array of labels>], \"environment\": [< array of environment observations >], and \"objects of interest\": [<array of object names>]}." 
                 },
                 { 
                     role: "system", 

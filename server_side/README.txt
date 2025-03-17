@@ -18,3 +18,4 @@ fix db race condition
 
 npm install openai
 npm install sharp
+npm install @mui/icons-material
