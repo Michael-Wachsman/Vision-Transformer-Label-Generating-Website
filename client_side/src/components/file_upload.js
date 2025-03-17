@@ -3,12 +3,16 @@ import { Button } from "@mui/material";
 import axios from "axios";
 import DisplayAnnotations from "./display_annotations";
 import logo from '../logo.svg';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+
 
 export default function MultipleImageUpload() {
   const [images, setImages] = useState([]);
   const [files, setFiles] = useState([]);
   const [showAnnotations, setShowAnnotations] = useState(false);
   const [generatedAnnotations, setGeneratedAnnotations] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const handleImageChange = (event) => {
     const selectedFiles = Array.from(event.target.files);
@@ -18,6 +22,7 @@ export default function MultipleImageUpload() {
   };
 
   const handleUpload = async () => {
+    setLoading(true)
     const formData = new FormData();
     files.forEach(file => formData.append("images", file));
 
@@ -26,7 +31,8 @@ export default function MultipleImageUpload() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setGeneratedAnnotations(response.data["image results"])
-      setShowAnnotations(true);
+      setLoading(false);
+      setShowAnnotations(true)
       console.log("Upload successful:", response.data);
     } catch (error) {
       console.error("Upload failed:", error);
@@ -51,6 +57,7 @@ export default function MultipleImageUpload() {
     setShowAnnotations(false);
 
     let payload = [];
+    console.log(editedAnnotations)
 
     for(const [index, img] of editedAnnotations.entries()){
       console.log("I seek to know")
@@ -104,6 +111,11 @@ export default function MultipleImageUpload() {
         <img src={logo} className="App-logo" alt="logo" />
     <div className="p-4 border rounded-lg w-full max-w-md mx-auto">
       {showAnnotations && <DisplayAnnotations images={images} annotations={generatedAnnotations} onClose={annotationClose} />}
+      {loading &&
+        <Box sx={{ display: 'flex' }}>
+        <CircularProgress />
+        </Box>
+      }
       <input
         type="file"
         multiple

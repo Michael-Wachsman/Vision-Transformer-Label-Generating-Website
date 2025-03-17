@@ -37,12 +37,13 @@ const upload = multer({ storage: storage });
 
 const openai = new OpenAI({ apiKey: process.env.API_KEY, });
 const model = "gpt-4o-mini-2024-07-18"
+const job_id = "ftjob-buwhYev77BaFz5nD4xOW2OlK"
 
 
 
 app.get('/debug', (req, res) => {
     db.execute(
-        `SELECT * FROM ImageInfo`, (err, results) => {
+        `SELECT * FROM PerfHist`, (err, results) => {
             if (err)
                 res.json({ message: "Oops, Error!", data: err });
             else if (results.length === 0) {
@@ -61,45 +62,6 @@ app.get('/', (req, res) => {
 
 
 
-
-app.post('/updateImageAnnotation', async (req,res) => {
-    data = req.body;
-    
-
-    try{
-        approvedIds = []
-        rejectedIds = []
-
-        for(const img of data){
-            if (img["approval status"] === "approved"){
-                approvedIds.push(img["id"])
-            }
-            else{
-                rejectedIds.push(img["id"])
-            }
-            db.execute(
-                `UPDATE ImageInfo
-                SET trueAnnotations = ?, approvalStatus = ?
-                WHERE ImageInfo.id = ? `,
-            [img["true annotation"], img["approval status"], img["id"]], (err, result) => {
-                if(err){
-                    console.log(err)
-                    return res.send(err)
-                }
-            });
-        }
-
-        
-
-
-        console.log("updated image annotations")
-        return res.send("information entered")
-    }catch(error){
-        console.log(error)
-        return res.send(error)
-    }
-
-});
 
 
 
@@ -175,7 +137,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 async function query_img(imagePath) {
     const base64Image = fs.readFileSync(imagePath, "base64");
 
-    const jobStatus = await openai.fineTuning.jobs.retrieve("ftjob-buwhYev77BaFz5nD4xOW2OlK");
+    const jobStatus = await openai.fineTuning.jobs.retrieve(job_id);
     const fineTunedModelId = jobStatus.fine_tuned_model;
     // console.log(fineTunedModelId)
 
@@ -209,6 +171,14 @@ async function query_img(imagePath) {
 
         console.log(imagePath + " Query done");
         message = query_res.choices?.[0]?.message?.content || "No response"
+        if(message === "No Response"){
+            message = {
+                "labels": [],
+                "environment": [],
+                "objects of interest": [],
+                "caption": ""
+              }
+        }
         return JSON.parse(message); // Send the response back to the frontend
     } catch (error) {
         console.error("Error:", error);
@@ -217,17 +187,75 @@ async function query_img(imagePath) {
 }
 
 
+app.post('/updateImageAnnotation', async (req,res) => {
+    data = req.body;
+    
+
+    try{
+        approvedIds = []
+        rejectedIds = []
+
+        for(const img of data){
+            if (img["approval status"] === "approved"){
+                approvedIds.push(img["id"])
+            }
+            else{
+                rejectedIds.push(img["id"])
+            }
+            db.execute(
+                `UPDATE ImageInfo
+                SET trueAnnotations = ?, approvalStatus = ?
+                WHERE ImageInfo.id = ? `,
+            [img["true annotation"], img["approval status"], img["id"]], (err, result) => {
+                if(err){
+                    console.log(err)
+                    return res.send(err)
+                }
+            });
+        }
+
+        db.execute(
+            `INSERT INTO PerfHist (approvalPercentage, approvedIds, rejectedIds) VALUES (?,?,?)`,
+            [approvedIds.length / (approvedIds.length + rejectedIds.length),JSON.stringify(approvedIds), JSON.stringify(rejectedIds)], (err, results) => {
+                if(err){
+                    console.log(err)
+                    return res.send(err)
+                }
+            });
+
+
+        console.log("updated image annotations")
+        return res.send("information entered")
+    }catch(error){
+        console.log(error)
+        return res.send(error)
+    }
+
+});
 
 
 
+app.get('/getPerfHist', async (req,res) => {
+    data = req.body;
 
+    try{
+        db.execute(
+            `SELECT * FROM PerfHist`,
+            (err, results) => {
+                if(err){
+                    console.log(err)
+                    return res.send(err)
+                }
+                else{
+                    return res.json(results)
+                }
+        });
+    }catch(error){
+        console.log(error)
+        return res.send(error)
+    }
 
-
-
-
-
-
-
+});
 
 
 
@@ -251,183 +279,3 @@ process.on('SIGINT', () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// app.get('/query', async (req, res) => {
-
-//     try {
-//         const response = await openai.chat.completions.create({
-//             model: model,
-//             messages: [
-//                 {
-//                     "role": "developer",
-//                     "content": "You are a helpful assistant named Jeff."
-//                 },
-//                 {
-//                     "role": "user",
-//                     "content": "Hello, whats your name!"
-//                 }
-//             ],
-//         });
-
-//         const query_res = response;
-
-//         console.log("Query done:", query_res);
-//         message = query_res.choices?.[0]?.message?.content || "No response"
-//         res.json(message); // Send the response back to the frontend
-//     } catch (error) {
-//         console.error("Error:", error);
-//         res.status(500).json({ error: "Failed to fetch response from OpenAI" });
-//     }
-// });
-
-
-
-
-// app.get('/query_img', async (req, res) => {
-//     const imagePath = "uploads/1742124673049-75353260_p0.jpeg";
-//     const base64Image = fs.readFileSync(imagePath, "base64");
-
-//     const jobStatus = await openai.fineTuning.jobs.retrieve("ftjob-buwhYev77BaFz5nD4xOW2OlK");
-//     const fineTunedModelId = jobStatus.fine_tuned_model;
-//     console.log(fineTunedModelId)
-
-//     try {
-//         const response = await openai.chat.completions.create({
-//             model: fineTunedModelId,
-//             messages: [
-//                 { 
-//                     role: "system", 
-//                     content: "Given an image, enter the relevant information for each of the following fields in a JSON dict: {\"labels\": [<array of labels>], \"environment\": \"environment observations\", and \"objects of interest\": [<array of object names>]}." 
-//                 },
-//                 { 
-//                     role: "system", 
-//                     content: "Give one final field for what you would caption the image as" 
-//                 },
-//                 {
-//                     role: "user",
-//                     content: [
-//                         { type: "text", text: "what's in this image?" },
-//                         {
-//                             type: "image_url",
-//                             image_url: {
-//                                 url: `data:image/jpeg;base64,${base64Image}`,
-//                             },
-//                         },
-//                     ],
-//                 }],
-//         });
-
-//         const query_res = response;
-
-//         console.log("Query done:", query_res);
-//         message = query_res.choices?.[0]?.message?.content || "No response"
-//         res.json(message); // Send the response back to the frontend
-//     } catch (error) {
-//         console.error("Error:", error);
-//         res.status(500).json({ error: "Failed to fetch response from OpenAI" });
-//     }
-// });
-
-
-
-
-
-
-
-// app.post('/getUserCompanyInfo', (req,res) => {
-//     data = req.body;
-//     console.log("hi")
-//     console.log(data)
-
-//     db.execute(
-//         `SELECT * FROM UserCompanyInfo
-//          INNER JOIN UserInfo
-//          ON UserInfo.id = UserCompanyInfo.userId
-//          WHERE UserInfo.id = ? AND UserCompanyInfo.companyId = ?`,
-//         [data.userId, data.companyId], (err, results) => {
-//         if (err)
-//             res.json({message:"Oops, Error!", data: err});
-//         else if(results.length === 0){
-//             res.json({message:"Oops, Missing!", data: "User company data doesn't exist (yet)"});
-//         }
-//         else{
-//             res.json({message:"Information Found", data: results})
-//         }
-//         console.log("success getting info");
-//     });
-// });
-
-// app.post('/registerNewUser', (req,res) => {
-//     console.log("registering new user")
-//     data = req.body;
-//     db.execute(
-//         `SELECT id FROM UserInfo
-//          WHERE id = ?`,
-//         [data.userId,], (err, results) => {
-//         if (err){
-//             res.json({message:"Oops, Error!", data: err});
-//             console.log(err);
-//         }
-//         else if(results.length !== 0){
-//             res.json({message:"Oops, user already exists!", data: ""});
-//         }
-//     });
-
-//     db.execute(
-//         `INSERT INTO UserInfo (id) VALUES (?)`,
-//         [data.userId,], (err, results) => {
-//         if (err){
-//             res.json({message:"Oops, Error!", data: err});
-//             console.log(err);
-//         }
-//         else{
-//             res.json({message:"User Successfully Added", data: results})
-//         }
-//         console.log(results);
-//     });
-// });
-
-
-// app.post('/getAllUserCompanies', (req, res) => {
-    //     data = req.headers.userid;
-    //     db.execute(
-    //         `SELECT UserCompanyInfo.companyId, UserCompanyInfo.status FROM UserCompanyInfo
-    //          INNER JOIN UserInfo
-    //          ON UserInfo.id = UserCompanyInfo.userId
-    //          WHERE UserInfo.id = ?`,
-    //         [data], (err, results) => {
-    //             if (err) {
-    //                 res.json({ message: "Oops, Error!", data: err });
-    //                 console.log(err);
-    //             }
-    //             else if (results.length === 0) {
-    //                 res.json({ message: "User company data doesn't exist (yet)!", data: results });
-    //             }
-    //             else {
-    //                 res.json({ message: "Information Found", data: results })
-    //             }
-    //         });
-    // });
-    
