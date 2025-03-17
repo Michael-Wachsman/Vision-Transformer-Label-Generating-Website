@@ -1,5 +1,5 @@
 docker pull mysql:latest
-
+ 
 
 #if a volume exists run the below line
 # -p mapps from the docker port 3306 to my port 3307
