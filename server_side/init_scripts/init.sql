@@ -6,8 +6,16 @@ CREATE TABLE db.ImageInfo (
     fileName TEXT NOT NULL,
     filePath TEXT NOT NULL,
     annotations JSON,
-    trueAnnotations JSON
+    trueAnnotations JSON,
+    approvalStatus VARCHAR(100)
 );
+
+CREATE TABLE db.PerfHist(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    approvalPercentage DOUBLE DEFAULT 0.0,
+    approvedIds JSON,
+    rejectedIds JSON
+)
 
 -- CREATE TABLE db.UserCompanyInfo (
 --     userId VARCHAR(100) NOT NULL,

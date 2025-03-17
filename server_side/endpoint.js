@@ -30,10 +30,13 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + '-' + file.originalname);
     },
 });
-
 // Set up multer instance with the storage configuration
 const upload = multer({ storage: storage });
 
+
+
+const openai = new OpenAI({ apiKey: process.env.API_KEY, });
+const model = "gpt-4o-mini-2024-07-18"
 
 
 
@@ -51,9 +54,54 @@ app.get('/debug', (req, res) => {
         });
 });
 
+
 app.get('/', (req, res) => {
     res.send("User DB Online");
 });
+
+
+
+
+app.post('/updateImageAnnotation', async (req,res) => {
+    data = req.body;
+    
+
+    try{
+        approvedIds = []
+        rejectedIds = []
+
+        for(const img of data){
+            if (img["approval status"] === "approved"){
+                approvedIds.push(img["id"])
+            }
+            else{
+                rejectedIds.push(img["id"])
+            }
+            db.execute(
+                `UPDATE ImageInfo
+                SET trueAnnotations = ?, approvalStatus = ?
+                WHERE ImageInfo.id = ? `,
+            [img["true annotation"], img["approval status"], img["id"]], (err, result) => {
+                if(err){
+                    console.log(err)
+                    return res.send(err)
+                }
+            });
+        }
+
+        
+
+
+        console.log("updated image annotations")
+        return res.send("information entered")
+    }catch(error){
+        console.log(error)
+        return res.send(error)
+    }
+
+});
+
+
 
 async function resizeImage(path) {
     try {
@@ -86,24 +134,29 @@ app.post('/upload', upload.array('images'), async (req, res) => {
             await resizeImage(img["path"]);
 
             annotation = await query_img(img["path"]);
-            
+            const results = await new Promise((resolve, reject) => {
+                db.execute(
+                    `INSERT INTO ImageInfo (fileName, filePath, annotations) VALUES (?,?,?)`,
+                    [img["originalname"],img["path"], annotation], (err, results) => {
+                    if (err){
+                        console.log("DB Error" + err);
+                        return res.json({message:"Oops, Error!", data: err});
+                    }
+                    else{
+                        resolve(results);
+                    }
+
+                    
+                });
+            });
             resp_json.push(
                 {
+                    id: results.insertId,
                     title: img["originalname"],
-                    "gen annotation": annotation,
-                    status: "success",
+                    "gen annotation": annotation
                 }
             );
-
-            db.execute(
-                `INSERT INTO ImageInfo (fileName, filePath, annotations) VALUES (?,?,?)`,
-                [img["originalname"],img["path"], annotation], (err, results) => {
-                if (err){
-                    console.log("DB Error" + err);
-                    return res.json({message:"Oops, Error!", data: err});
-                }
-                console.log("success inserting info");
-            });
+            console.log("success inserting info");
         };
         console.log("finished queries")
         // Respond to the client
@@ -117,12 +170,6 @@ app.post('/upload', upload.array('images'), async (req, res) => {
     }
 
 });
-
-
-
-const openai = new OpenAI({ apiKey: process.env.API_KEY, });
-
-const model = "gpt-4o-mini-2024-07-18"
 
 
 async function query_img(imagePath) {
@@ -170,33 +217,21 @@ async function query_img(imagePath) {
 }
 
 
-app.get('/query', async (req, res) => {
 
-    try {
-        const response = await openai.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    "role": "developer",
-                    "content": "You are a helpful assistant named Jeff."
-                },
-                {
-                    "role": "user",
-                    "content": "Hello, whats your name!"
-                }
-            ],
-        });
 
-        const query_res = response;
 
-        console.log("Query done:", query_res);
-        message = query_res.choices?.[0]?.message?.content || "No response"
-        res.json(message); // Send the response back to the frontend
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: "Failed to fetch response from OpenAI" });
-    }
-});
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -239,7 +274,33 @@ process.on('SIGINT', () => {
 
 
 
+// app.get('/query', async (req, res) => {
 
+//     try {
+//         const response = await openai.chat.completions.create({
+//             model: model,
+//             messages: [
+//                 {
+//                     "role": "developer",
+//                     "content": "You are a helpful assistant named Jeff."
+//                 },
+//                 {
+//                     "role": "user",
+//                     "content": "Hello, whats your name!"
+//                 }
+//             ],
+//         });
+
+//         const query_res = response;
+
+//         console.log("Query done:", query_res);
+//         message = query_res.choices?.[0]?.message?.content || "No response"
+//         res.json(message); // Send the response back to the frontend
+//     } catch (error) {
+//         console.error("Error:", error);
+//         res.status(500).json({ error: "Failed to fetch response from OpenAI" });
+//     }
+// });
 
 
 

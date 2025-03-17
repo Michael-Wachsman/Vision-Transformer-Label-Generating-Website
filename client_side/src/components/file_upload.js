@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@mui/material";
 import axios from "axios";
 import DisplayAnnotations from "./display_annotations";
+import logo from '../logo.svg';
 
 export default function MultipleImageUpload() {
   const [images, setImages] = useState([]);
@@ -46,6 +47,50 @@ export default function MultipleImageUpload() {
     setFiles(newFiles);
   };
 
+  async function annotationClose(editedAnnotations, approved, edited, rejected){
+    setShowAnnotations(false);
+
+    let payload = [];
+
+    for(const [index, img] of editedAnnotations.entries()){
+      console.log("I seek to know")
+      console.log(editedAnnotations)
+      console.log(approved)
+
+      let approval_status = ""
+      if(approved.has(index)){
+        approval_status = "approved"
+      }
+      else if(edited.has(index)){
+        approval_status = "edited"
+      }
+      else{
+        approval_status = "rejected"
+      }
+
+      let info = {
+        "id": img["id"],
+        "true annotation": img["gen annotation"],
+        "approval status": approval_status
+      }
+
+      payload.push(info)
+    }
+
+    await axios.post("http://localhost:4440/updateImageAnnotation", payload, {headers: {'Content-Type': 'application/json'}})
+      .then(response => {
+        console.log('Success:', response.data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+
+    return
+  }
+
+
+
+
   const gridStyle = {
     marginTop: '1rem',
     display: 'grid',
@@ -55,8 +100,10 @@ export default function MultipleImageUpload() {
   };
 
   return (
+    <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
     <div className="p-4 border rounded-lg w-full max-w-md mx-auto">
-      {showAnnotations && <DisplayAnnotations images={images} annotations={generatedAnnotations} onClose={() => {setShowAnnotations(false)}} />}
+      {showAnnotations && <DisplayAnnotations images={images} annotations={generatedAnnotations} onClose={annotationClose} />}
       <input
         type="file"
         multiple
@@ -101,5 +148,6 @@ export default function MultipleImageUpload() {
       </div>
       <div style={{ marginBottom: '400px' }}/> 
     </div>
+    </header>
   );
 }

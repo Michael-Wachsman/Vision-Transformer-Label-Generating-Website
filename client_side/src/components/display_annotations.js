@@ -166,15 +166,6 @@ export default function DisplayAnnotations({images, annotations, onClose}) {
     };
         
     
-    // Save all changes
-    const handleSaveChanges = () => {
-        if (onSave) {
-            onSave(editedAnnotations);
-        }
-        setEditMode(false);
-        setCurrentImageIndex(null);
-    };
-    
     // Cancel editing
     const handleCancelEdit = () => {
         setEditedAnnotations(JSON.parse(JSON.stringify(annotations)));
@@ -215,14 +206,14 @@ export default function DisplayAnnotations({images, annotations, onClose}) {
                     <h2 style={{ margin: 0 }}>Image Annotations</h2>
                     <div>
                         
-                        <button onClick={onClose} disabled={Object.keys(images).length != (acceptedImages.size + rejectedImages.size)} style={{
+                        <button onClick={() => onClose(editedAnnotations,acceptedImages,editedImages,rejectedImages)} disabled={Object.keys(images).length != (acceptedImages.size + rejectedImages.size)} style={{
                             background: Object.keys(images).length != (acceptedImages.size + rejectedImages.size) ? 'grey' : 'red',
                             color: 'white',
                             border: 'none',
                             borderRadius: '5px',
                             padding: '5px 10px',
                             cursor: 'pointer'
-                        }}>{Object.keys(images).length != (acceptedImages.size + rejectedImages.size) ? "Approve or reject all images" : "Close"}</button>
+                        }}>{Object.keys(images).length != (acceptedImages.size + rejectedImages.size) ? "Please first Approve or Reject all images" : "Close"}</button>
                     </div>
                 </div>
                 
