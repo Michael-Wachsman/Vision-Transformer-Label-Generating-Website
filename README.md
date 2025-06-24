@@ -11,12 +11,8 @@ On the home page, the user can upload as many files as they like by clicking the
 
 On the dashboard page, there is a minimal grid showing the accuracies of each batch and how many images were processed by the model in each batch.
 
-Personal Acknowledgment:
-I want to be upfront: I unfortunately did not get to finish everything I wanted to for this project. This was my first time working with fine-tuning a large language model or using a vision transformer. A lot of my development time was spent learning through each task, and this is partially why inconsistent styles may be seen across the different files I provided. As I progressed and learned more, my style evolved, and I currently lack the time to go back and standardize everything. I certainly plan to come back to this project in the future to complete it for my own understanding, since it was actually a lot of fun.
 
 Future Work:
-Here is the roadmap for how I would bring the project to completion:
-
 I would rework the annotation generation workflow so that all the annotations for each image can be generated in parallel, rather than sequentially.
 I would complete the active-learning pipeline by expanding the fine-tuning script into one that can be applied to the data stored from the approved and edited annotations in the database, using them for supervised training.
 I would finish the dashboard page, allowing the user to get a breakdown of the model’s performance across several different categories. This would be done by feeding the superset of all labels generated in the annotations to a ChatGPT instance, allowing it to create generalized labels. I would then filter each annotation for these labels using further GPT prompts for a hyper specific metric system. Of course I would also present which images fall into each category to the user to ensure metric transparency.
