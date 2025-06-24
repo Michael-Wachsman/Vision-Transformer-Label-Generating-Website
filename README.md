@@ -1,8 +1,5 @@
 This is the first of three ReadMe’s for this project. This first one will cover the general architecture of what I've built, and the next two — one in the client-side folder and one in the server-side folder — will guide you on how to start up the front-end and back-end.
 
-Personal Acknowledgment:
-I want to be upfront: I unfortunately did not get to finish everything I wanted to for this project. This was my first time working with fine-tuning a large language model or using a vision transformer. A lot of my development time was spent learning through each task, and this is partially why inconsistent styles may be seen across the different files I provided. As I progressed and learned more, my style evolved, and I currently lack the time to go back and standardize everything. I certainly plan to come back to this project in the future to complete it for my own understanding, since it was actually a lot of fun.
-
 Architecture:
 The front-end is built with React, while the back-end is built with Node.js, utilizing a Dockerized MySQL database for image and annotation storage. Axios is used for making requests on the front end. The OpenAI GPT-4o model is leveraged for the image annotation workflow. However, this is fine-tuned based on the dataset provided. In the future, it can also be fine-tuned based on any annotations the user approves or edits in.
 
@@ -14,6 +11,8 @@ On the home page, the user can upload as many files as they like by clicking the
 
 On the dashboard page, there is a minimal grid showing the accuracies of each batch and how many images were processed by the model in each batch.
 
+Personal Acknowledgment:
+I want to be upfront: I unfortunately did not get to finish everything I wanted to for this project. This was my first time working with fine-tuning a large language model or using a vision transformer. A lot of my development time was spent learning through each task, and this is partially why inconsistent styles may be seen across the different files I provided. As I progressed and learned more, my style evolved, and I currently lack the time to go back and standardize everything. I certainly plan to come back to this project in the future to complete it for my own understanding, since it was actually a lot of fun.
 
 Future Work:
 Here is the roadmap for how I would bring the project to completion:
